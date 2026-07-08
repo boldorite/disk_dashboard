@@ -254,49 +254,79 @@ def _explorer_windows() -> set[int]:
 
 
 def _bring_to_front(hwnd: int) -> None:
-    """지정한 창을 화면 맨 앞으로 (foreground lock 우회)."""
+    """지정한 창을 화면 맨 앞으로. 백그라운드 서버에서도 확실히 앞에 오도록
+    (1) 최소화→복원으로 활성화, (2) 잠깐 topmost 로 올렸다 내려 브라우저 위로,
+    (3) AttachThreadInput 으로 foreground 시도 를 함께 쓴다."""
     import ctypes
 
     user32 = ctypes.windll.user32
     kernel32 = ctypes.windll.kernel32
+
+    SW_MINIMIZE = 6
     SW_RESTORE = 9
+    HWND_TOPMOST = -1
+    HWND_NOTOPMOST = -2
+    SWP_NOMOVE = 0x0002
+    SWP_NOSIZE = 0x0001
+    SWP_SHOWWINDOW = 0x0040
+    SPI_SETFOREGROUNDLOCKTIMEOUT = 0x2001
+    flags = SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW
+
+    # foreground 잠금 타임아웃 해제
+    try:
+        user32.SystemParametersInfoW(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, 0, 0)
+    except OSError:
+        pass
+
+    # 최소화 후 복원 → 확실히 활성화
+    user32.ShowWindow(hwnd, SW_MINIMIZE)
     user32.ShowWindow(hwnd, SW_RESTORE)
+
+    # 잠깐 항상 위로 올렸다가 해제 → 브라우저보다 앞에 그려짐
+    user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags)
+    user32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, flags)
+
+    # foreground 시도 (foreground 스레드에 입력 attach)
     fg = user32.GetForegroundWindow()
     fg_thread = user32.GetWindowThreadProcessId(fg, 0)
     cur_thread = kernel32.GetCurrentThreadId()
-    # ALT 키를 살짝 눌러 foreground 잠금 해제 후 활성화
-    user32.keybd_event(0x12, 0, 0, 0)          # ALT down
-    user32.AttachThreadInput(cur_thread, fg_thread, True)
+    attached = bool(user32.AttachThreadInput(cur_thread, fg_thread, True))
     user32.BringWindowToTop(hwnd)
     user32.SetForegroundWindow(hwnd)
-    user32.AttachThreadInput(cur_thread, fg_thread, False)
-    user32.keybd_event(0x12, 0, 2, 0)          # ALT up
+    if attached:
+        user32.AttachThreadInput(cur_thread, fg_thread, False)
 
 
 def _open_and_front(path: str) -> None:
-    """탐색기로 폴더를 열고 그 창을 맨 앞으로 가져온다."""
+    """탐색기로 폴더를 열고 그 창을 맨 앞으로 가져온다. 앞으로 가져오기가
+    실패해도 폴더 열기 자체는 유지되도록 best-effort 로 처리한다."""
     import subprocess
     import time
 
-    before = _explorer_windows()
-    subprocess.Popen(["explorer", path])
-    # 새 창이 뜰 때까지 잠깐 폴링
-    target = None
-    for _ in range(30):
-        time.sleep(0.05)
-        new = _explorer_windows() - before
-        if new:
-            target = next(iter(new))
-            break
-    if target is None:
-        # 새 창이 안 생겼으면(기존 창 재사용 등) 아무 탐색기 창이나 앞으로
-        wins = _explorer_windows()
-        target = next(iter(wins)) if wins else None
-    if target is not None:
-        try:
+    try:
+        before = _explorer_windows()
+    except Exception:
+        before = set()
+
+    subprocess.Popen(["explorer", path])   # 실패하면 여기서 예외 → 진짜 실패
+
+    try:
+        # 새 창이 뜰 때까지 잠깐 폴링 (최대 ~1.5초)
+        target = None
+        for _ in range(30):
+            time.sleep(0.05)
+            new = _explorer_windows() - before
+            if new:
+                target = max(new)          # 대체로 가장 최근에 생긴 창
+                break
+        if target is None:
+            # 새 창이 안 생겼으면(기존 창 재사용 등) 아무 탐색기 창이나 앞으로
+            wins = _explorer_windows()
+            target = max(wins) if wins else None
+        if target is not None:
             _bring_to_front(target)
-        except OSError:
-            pass
+    except Exception:
+        pass                                # 앞으로 가져오기는 실패해도 무시
 
 
 @app.post("/api/open")
