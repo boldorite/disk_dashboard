@@ -14,3 +14,9 @@ _cho_central_tmp/
 # 프로젝트 산출물이 아닌 로컬/툴 파일
 .claude/
 llmwiki_prompt_library.txt.txt
+
+# PyInstaller 빌드 산출물 (exe는 소스로 재빌드)
+build/
+dist/
+*.spec
+exe_test.log

@@ -10,6 +10,7 @@ import os
 import shutil
 import socket
 import string
+import sys
 import threading
 from pathlib import Path
 from typing import Any
@@ -19,9 +20,18 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-CONFIG_PATH = BASE_DIR / "config.json"
+# PyInstaller --onefile 대응:
+#  - 번들 리소스(static)는 임시 추출 폴더(sys._MEIPASS)에서 읽는다.
+#  - config.json 은 exe 옆(실행 파일 폴더)에 저장해 재실행해도 유지되게 한다.
+if getattr(sys, "frozen", False):
+    BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    APP_DIR = Path(sys.executable).resolve().parent
+else:
+    BUNDLE_DIR = Path(__file__).resolve().parent
+    APP_DIR = BUNDLE_DIR
+
+STATIC_DIR = BUNDLE_DIR / "static"
+CONFIG_PATH = APP_DIR / "config.json"
 
 app = FastAPI(title="폴더관리 Dashboard")
 
@@ -402,7 +412,6 @@ def find_free_port(start: int = 5000, end: int = 6000) -> int:
 
 
 if __name__ == "__main__":
-    import sys
     import uvicorn
     import webbrowser
 
@@ -418,4 +427,5 @@ if __name__ == "__main__":
     print(f"\n  폴더관리 Dashboard  ->  {url}\n")
     # 서버가 뜬 뒤 브라우저 자동 오픈
     threading.Timer(1.2, lambda: webbrowser.open(url)).start()
-    uvicorn.run(app, host="127.0.0.1", port=port)
+    # exe 패키징 안정성을 위해 순수 파이썬 http(h11) 사용, 웹소켓 비활성
+    uvicorn.run(app, host="127.0.0.1", port=port, http="h11", ws="none")

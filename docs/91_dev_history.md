@@ -45,3 +45,30 @@
 #### Next Actions
 - 실제 직원 PC(changjo-PC)에서 배포/실행 검증
 - 완료 조건 최종 확정, 필요 시 단일 exe 패키징 검토
+
+### 2026-07-08 폴더 열기 개선 및 단일 exe 패키징
+#### User Request
+- 폴더 열기 시 탐색기 창이 브라우저 뒤로 가지 않고 꼭 맨 앞에 뜨게 해달라
+- 단일 exe 1개로 만들어달라
+
+#### Work Done
+- 폴더 열기(`/api/open`) 최전면 로직 강화: 최소화→복원 + 잠깐 topmost 토글 + AttachThreadInput, best-effort 처리(앞으로 가져오기 실패해도 열기는 성공)
+- PyInstaller `--onefile` 로 단일 exe 빌드(`dist/폴더관리Dashboard.exe`, 약 17MB)
+  - frozen 대응: `static/` 은 `sys._MEIPASS` 번들에서 읽고, `config.json` 은 exe 옆에 저장(재실행 유지)
+  - 안정성 위해 uvicorn `http="h11"`, `ws="none"` 로 고정(네이티브 의존 제거)
+  - 로고(`static/nump_logo.png`) → `app.ico` 변환해 exe 아이콘 적용
+  - `build_exe.bat` 빌드 스크립트 추가
+- exe 실행 검증: 포트 자동 선택, 페이지·정적·폴더 스캔·폴더 열기 정상
+
+#### Files Changed
+- `app.py` (frozen 경로 처리, uvicorn h11/ws none, 폴더 열기 최전면 강화)
+- `build_exe.bat`, `app.ico`
+- `.gitignore` (build/·dist/·*.spec 제외)
+- `README.md`, `docs/02_setup.md`, `docs/90_decisions.md`, `docs/99_next_tasks.md`
+
+#### Decisions
+- exe 는 소스로 재빌드(빌드 산출물 build/·dist/·*.spec 은 Git 미포함), `app.ico` 만 커밋
+- uvicorn 은 exe 안정성을 위해 h11/ws none 사용
+
+#### Next Actions
+- 실제 직원 PC(changjo-PC)에서 exe 단독 실행(신규 설치 기준) 검증

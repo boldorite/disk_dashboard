@@ -26,6 +26,12 @@ python -m venv .venv
 ```
 실행하면 브라우저가 `http://127.0.0.1:<빈 포트>` 로 자동 오픈됩니다.
 
+### 단일 exe 배포
+```powershell
+build_exe.bat        # dist\폴더관리Dashboard.exe 생성 (약 17MB, Python 불필요)
+```
+exe 를 더블클릭하면 서버가 뜨고 브라우저가 열립니다. 등록 폴더(`config.json`)는 exe 와 같은 폴더에 저장됩니다.
+
 ## Key Documents
 - Overview: [docs/00_overview.md](docs/00_overview.md)
 - Architecture: [docs/01_architecture.md](docs/01_architecture.md)
