@@ -1,0 +1,11 @@
+# .llmwiki — 이 폴더가 어떤 프로젝트인지 알려주는 포인터
+project_id: disk_dashboard
+title: "디스크 폴더관리 대시보드"
+dashboard_repo: "https://github.com/boldorite/cho-work-dashboard"
+dashboard_repo_url: "https://github.com/boldorite/cho-work-dashboard.git"
+repo: "https://github.com/boldorite/disk_dashboard.git"
+machine: changjo-pc
+path: "C:/Users/PHYSICS/Desktop/disk_dashboard"
+role: deploy
+dev_history_file: "docs/91_dev_history.md"
+standard_dev_history: "docs/91_dev_history.md"

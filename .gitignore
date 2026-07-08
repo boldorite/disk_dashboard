@@ -1,0 +1,16 @@
+# Python venv / cache
+.venv/
+__pycache__/
+*.pyc
+
+# 로컬 설정 (등록 폴더 경로 - Git 원격에 올리지 않음)
+config.json
+
+# 로그 / 임시
+server.log
+shot_*.png
+_cho_central_tmp/
+
+# 프로젝트 산출물이 아닌 로컬/툴 파일
+.claude/
+llmwiki_prompt_library.txt.txt

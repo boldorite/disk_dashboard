@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>폴더관리 Dashboard</title>
+  <script>
+    // 깜빡임 방지: 렌더 전에 테마 지정
+    document.documentElement.setAttribute(
+      'data-theme', localStorage.getItem('theme') || 'dark'
+    );
+  </script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="app">
+    <div class="inner">
+      <a href="/" style="display:flex;align-items:center;gap:12px;color:inherit">
+        <span class="logo-box">
+          <img src="/static/nump_logo.png" alt="NUMP" onerror="this.style.display='none'" />
+        </span>
+        <h1>폴더관리 Dashboard</h1>
+      </a>
+      <span style="flex:1"></span>
+      <span id="statusLine" class="hdr-status"></span>
+      <span style="flex:1"></span>
+      <div class="seg" id="barModeSeg" title="막대 기준">
+        <button type="button" data-mode="disk">💽 디스크</button>
+        <button type="button" data-mode="parent">📁 상위폴더</button>
+      </div>
+      <button class="btn primary" id="manageBtn">📁 폴더관리</button>
+      <button class="btn" id="refreshBtn">🔄 갱신</button>
+      <button class="btn ghost sm" id="themeBtn" title="테마 전환">🌓 테마</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="summary" id="stats" style="display:none">
+      <span class="s-item"><b id="stFolders">0</b> 등록 폴더</span>
+      <span class="s-sep">·</span>
+      <span class="s-item"><b id="stDirs">0</b> 하위 폴더</span>
+      <span class="s-sep">·</span>
+      <span class="s-item"><b id="stFiles">0</b> 전체 파일</span>
+      <span class="s-sep">·</span>
+      <span class="s-item">전체 <b id="stSize">0</b></span>
+    </div>
+
+    <div id="content"></div>
+  </main>
+
+  <!-- 폴더선택관리 모달 -->
+  <div class="modal-back" id="modalBack">
+    <div class="modal">
+      <div class="m-head">
+        <h2>📁 폴더선택관리</h2>
+        <button class="x" id="modalClose">&times;</button>
+      </div>
+      <div class="m-body">
+        <div class="section-title">폴더 선택</div>
+        <div class="browse-path" id="browsePath">드라이브를 선택하세요</div>
+        <div class="browse-list" id="browseList"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn sm" id="addCurrentBtn" disabled>＋ 현재 폴더 추가</button>
+          <button class="btn primary sm" id="addSelectedBtn" disabled>＋ 선택 추가 (0)</button>
+          <span id="selHint" style="color:var(--text-sub);font-size:12.5px">체크박스 · Ctrl-클릭(개별) · Shift-클릭(범위)</span>
+        </div>
+
+        <div class="section-title" style="margin-top:20px">등록된 폴더</div>
+        <div class="managed-list" id="managedList"></div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" id="refreshAllBtn">🔄 갱신</button>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn danger" id="resetBtn">🗑 완전초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
